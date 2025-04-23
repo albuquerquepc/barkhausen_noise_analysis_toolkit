@@ -94,6 +94,15 @@ class DataShower(QWidget):
         self.fileIndexComboBox.setEnabled(False)
         self.leftContainerLayout.addWidget(self.fileIndexComboBox)
 
+        self.leftContainerLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+
+        self.numberOfPointsTeller = QLabel("Número de pontos: ")
+        self.leftContainerLayout.addWidget(self.numberOfPointsTeller)
+        self.timeSpanTeller = QLabel("Duração da varredura: ")
+        self.leftContainerLayout.addWidget(self.timeSpanTeller)
+        self.samplingRateTeller = QLabel("Sampling Rate: ")
+        self.leftContainerLayout.addWidget(self.samplingRateTeller)
+
         self.leftContainerLayout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         self.rightColumn = QVBoxLayout()
@@ -160,10 +169,19 @@ class DataShower(QWidget):
 
         self.fileIndexComboBox.setEnabled(bool(seriesFiles))
 
+
     def updateFileIndex(self) -> None:
         selectedIndex = self.fileIndexComboBox.currentIndex() - 1
         if 0 <= selectedIndex < len(self.matchingFiles):
             self.plotData(self.matchingFiles[selectedIndex])
+            serieNumber = int(self.matchingFiles[selectedIndex][-7:-4])
+            df = self.fileWorkerInterfacer.getDataFromFile(serieNumber)
+            lenOfSeries = len(df["Series"].values)
+            sweepDuration = (max(df["Time"].values) - min(df["Time"].values))
+            samplingRate = lenOfSeries * sweepDuration
+            self.numberOfPointsTeller.setText(f"Número de pontos: {lenOfSeries}")
+            self.timeSpanTeller.setText(f"Duração da varredura: {sweepDuration} (s)")
+            self.samplingRateTeller.setText(f"Samplign Rate: {samplingRate} (S/s)")
 
     def checkInputs(self) -> None:
         if self.pathUserInput.text() and self.keywordUserInput.text() and self.timeAxisFileInput.text():
