@@ -1,9 +1,9 @@
-import os
-import pandas as pd
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog, QComboBox, QSpacerItem, QSizePolicy)
-from PySide6.QtCore import Qt
-from pyqtgraph import PlotWidget, mkPen, setConfigOption, ScatterPlotItem, mkBrush, PlotCurveItem
-import re
+import os #Basic os file manipulation
+import pandas as pd #Data processing library, akin to Numpy; personal preference
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog, QComboBox, QSpacerItem, QSizePolicy) #GUI drawing tools
+from PySide6.QtCore import Qt #Qt interfacing
+from pyqtgraph import PlotWidget, mkPen, setConfigOption, ScatterPlotItem, mkBrush, PlotCurveItem #GPU-accelerated plotting capabilities
+import re #Regex support
 
 
 #For some reason, this only works here. I really don't know why, maybe a bug?
