@@ -1,265 +1,206 @@
-import os #Basic os file manipulation
-import pandas as pd #Data processing library, akin to Numpy; personal preference
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog, QComboBox, QSpacerItem, QSizePolicy) #GUI drawing tools
-from PySide6.QtCore import Qt #Qt interfacing
-from pyqtgraph import PlotWidget, mkPen, setConfigOption, ScatterPlotItem, mkBrush, PlotCurveItem #GPU-accelerated plotting capabilities
-import re #Regex support
+import os
+import numpy as np
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog, QSpacerItem, QSizePolicy)
+from PySide6.QtCore import Qt
+from pyqtgraph import PlotWidget, mkPen, setConfigOption, ScatterPlotItem, mkBrush, PlotCurveItem
 
-
-#For some reason, this only works here. I really don't know why, maybe a bug?
+# For some reason, this only works here. I really don't know why, maybe a bug?
 setConfigOption("background", "w")
 setConfigOption("foreground", "k")
 
 
-#File management and data processing class handler
+# File management and data processing class handler
 class FileWorkers():
     def __init__(self) -> None:
         super().__init__()
 
-    def userInput(self, folderPath: str, keyword: str, timeAxisFile: str) -> None:
-        self.folderPath = folderPath
-        self.keywordToMatch = keyword
-        self.timeAxisFile = timeAxisFile
+    def get_data_from_file(self, data_file_path: str, time_axis_file_path: str) -> tuple[np.ndarray, np.ndarray]:
+        time_axis = np.loadtxt(time_axis_file_path)
+        series_data = np.loadtxt(data_file_path, dtype=np.float128)
+        return time_axis, series_data
 
-    def getMatchingFiles(self) -> list:
-        self.allFilesInFolder = [self.dataFile for self.dataFile in os.listdir(self.folderPath) if self.dataFile.endswith(".dat")]
-        self.filesWithKeyWord = [fileWithKeyword for fileWithKeyword in self.allFilesInFolder if (
-            fileWithKeyword.startswith(self.keywordToMatch) and fileWithKeyword.endswith(".dat"))]
-        self.sortedMatchingFiles = sorted(
-            [f for f in self.filesWithKeyWord if f != f"{self.keywordToMatch}_t.dat"])
-        return self.sortedMatchingFiles
-
-    def getDataFromFile(self, serieNumber: int) -> pd.DataFrame:
-        self.timeAxis = pd.read_csv(
-            f"{self.folderPath}/{self.timeAxisFile}", header=None)
-        self.serieNumber = serieNumber
-        self.completeFilePath = f"{self.folderPath}/{self.keywordToMatch}{self.serieNumber:03}.dat"
-        self.fileReader = pd.read_csv(self.completeFilePath, header=None)
-        self.dfOfTimeSeries = pd.concat([self.timeAxis, self.fileReader], axis=1)
-        self.dfOfTimeSeries.columns = ["Time", "Series"]
-        return self.dfOfTimeSeries
-
-#GUI interectability and data show class handler
+# GUI interectability and data show class handler
 class DataShower(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Plotter das séries temporais do BN")
-        self.highlightPlot = None
-        self.currentHighlightedIndex = None
-        self.currentDataX = None
-        self.currentDataY = None
+        self.highlight_plot = None
+        self.current_highlighted_index = None
+        self.current_data_x = None
+        self.current_data_y = None
         self.setFocusPolicy(Qt.StrongFocus)
 
-        self.mainLayout = QHBoxLayout()
+        self.main_layout = QHBoxLayout()
 
-        self.leftContainer = QWidget()
-        self.leftContainerLayout = QVBoxLayout()
-        self.leftContainer.setLayout(self.leftContainerLayout)
+        self.left_container = QWidget()
+        self.left_container_layout = QVBoxLayout()
+        self.left_container.setLayout(self.left_container_layout)
 
-        self.leftContainerLayout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.left_container_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        self.pathLabel = QLabel("Caminho da pasta: ")
-        self.leftContainerLayout.addWidget(self.pathLabel)
+        self.data_file_path_label = QLabel("Caminho do arquivo de dados (.dat):")
+        self.left_container_layout.addWidget(self.data_file_path_label)
 
-        self.pathUserInput = QLineEdit()
-        self.pathUserInput.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Prepared_Selected_0.2198s_0.22s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs") 
-        self.leftContainerLayout.addWidget(self.pathUserInput)
+        self.data_file_path_input = QLineEdit()
+        self.data_file_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Prepared_Selected_FFT_0.2316s_0.2318s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D001.dat")
+        self.left_container_layout.addWidget(self.data_file_path_input)
 
-        self.browseButton = QPushButton("Abrir explorador de arquivos...")
-        self.browseButton.clicked.connect(self.browseFolder)
-        self.leftContainerLayout.addWidget(self.browseButton)
+        self.browse_data_file_button = QPushButton("Procurar arquivo de dados...")
+        self.browse_data_file_button.clicked.connect(self.browse_data_file)
+        self.left_container_layout.addWidget(self.browse_data_file_button)
 
-        self.keywordLabel = QLabel("Nome da amostra: ")
-        self.leftContainerLayout.addWidget(self.keywordLabel)
+        self.time_axis_path_label = QLabel("Caminho do arquivo do eixo de tempo:")
+        self.left_container_layout.addWidget(self.time_axis_path_label)
 
-        self.keywordUserInput = QLineEdit()
-        self.keywordUserInput.setText("R798D")
-        self.leftContainerLayout.addWidget(self.keywordUserInput)
+        self.time_axis_path_input = QLineEdit()
+        self.time_axis_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Prepared_Selected_FFT_0.2316s_0.2318s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D_t.dat")
+        self.left_container_layout.addWidget(self.time_axis_path_input)
 
-        self.loadButton = QPushButton("Indexar")
-        self.loadButton.clicked.connect(self.loadMatchingFiles)
-        self.leftContainerLayout.addWidget(self.loadButton)
+        self.browse_time_file_button = QPushButton("Procurar arquivo de tempo...")
+        self.browse_time_file_button.clicked.connect(self.browse_time_file)
+        self.left_container_layout.addWidget(self.browse_time_file_button)
 
-        self.timeAxisLabel = QLabel("Nome do arquivo da série temporal: ")
-        self.leftContainerLayout.addWidget(self.timeAxisLabel)
+        self.plot_button = QPushButton("Plotar")
+        self.plot_button.clicked.connect(self.plot_from_inputs)
+        self.left_container_layout.addWidget(self.plot_button)
 
-        self.timeAxisFileInput = QLineEdit()
-        self.leftContainerLayout.addWidget(self.timeAxisFileInput)
+        self.left_container_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
 
-        self.pathUserInput.textChanged.connect(self.checkInputs)
-        self.keywordUserInput.textChanged.connect(self.checkInputs)
-        self.timeAxisFileInput.textChanged.connect(self.checkInputs)
+        self.number_of_points_teller = QLabel("Número de pontos: ")
+        self.left_container_layout.addWidget(self.number_of_points_teller)
+        self.time_span_teller = QLabel("Duração da varredura: ")
+        self.left_container_layout.addWidget(self.time_span_teller)
+        self.sampling_rate_teller = QLabel("Sampling Rate: ")
+        self.left_container_layout.addWidget(self.sampling_rate_teller)
 
-        self.fileIndexComboBox = QComboBox()
-        self.fileIndexComboBox.addItem("Selecione uma série")
-        self.fileIndexComboBox.currentIndexChanged.connect(self.updateFileIndex)
-        self.fileIndexComboBox.setEnabled(False)
-        self.leftContainerLayout.addWidget(self.fileIndexComboBox)
+        self.left_container_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        self.leftContainerLayout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        self.right_column = QVBoxLayout()
+        self.plot_widget = PlotWidget()
+        self.right_column.addWidget(self.plot_widget)
 
-        self.numberOfPointsTeller = QLabel("Número de pontos: ")
-        self.leftContainerLayout.addWidget(self.numberOfPointsTeller)
-        self.timeSpanTeller = QLabel("Duração da varredura: ")
-        self.leftContainerLayout.addWidget(self.timeSpanTeller)
-        self.samplingRateTeller = QLabel("Sampling Rate: ")
-        self.leftContainerLayout.addWidget(self.samplingRateTeller)
+        self.data_info_label = QLabel("Clique em um ponto ou use ← → para navegar")
+        self.right_column.addWidget(self.data_info_label)
 
-        self.leftContainerLayout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.zoom_control_layout = QHBoxLayout()
+        self.zoom_in_button = QPushButton("Zoom In")
+        self.zoom_in_button.clicked.connect(self.zoom_in)
+        self.zoom_control_layout.addWidget(self.zoom_in_button)
+        self.zoom_out_button = QPushButton("Zoom Out")
+        self.zoom_out_button.clicked.connect(self.zoom_out)
+        self.zoom_control_layout.addWidget(self.zoom_out_button)
 
-        self.rightColumn = QVBoxLayout()
-        self.plotWidget = PlotWidget()
-        self.rightColumn.addWidget(self.plotWidget)
+        self.right_column.addLayout(self.zoom_control_layout)
 
-        self.dataInfoLabel = QLabel("Clique em um ponto ou use ← → para navegar")
-        self.rightColumn.addWidget(self.dataInfoLabel)
+        self.main_layout.addWidget(self.left_container, stretch=1)
+        self.main_layout.addLayout(self.right_column, stretch=2)
+        self.setLayout(self.main_layout)
 
-        self.zoomControlLayout = QHBoxLayout()
-        self.zoomInButton = QPushButton("Zoom In")
-        self.zoomInButton.clicked.connect(self.zoomIn)
-        self.zoomControlLayout.addWidget(self.zoomInButton)
-        self.zoomOutButton = QPushButton("Zoom Out")
-        self.zoomOutButton.clicked.connect(self.zoomOut)
-        self.zoomControlLayout.addWidget(self.zoomOutButton)
+        self.file_worker_interfacer = FileWorkers()
 
-        self.rightColumn.addLayout(self.zoomControlLayout)
+        self.plot_widget.scene().sigMouseClicked.connect(self.on_plot_clicked)
 
-        self.mainLayout.addWidget(self.leftContainer, stretch=1)
-        self.mainLayout.addLayout(self.rightColumn, stretch=2)
-        self.setLayout(self.mainLayout)
+    def browse_data_file(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(self, "Selecionar arquivo de dados", "", "Data Files (*.dat)")
+        if file_path:
+            self.data_file_path_input.setText(file_path)
 
-        self.fileWorkerInterfacer = FileWorkers()
+    def browse_time_file(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(self, "Selecionar arquivo de eixo de tempo", "", "Data Files (*.dat)")
+        if file_path:
+            self.time_axis_path_input.setText(file_path)
 
-        self.plotWidget.scene().sigMouseClicked.connect(self.onPlotClicked)
+    def plot_from_inputs(self) -> None:
+        data_path = self.data_file_path_input.text()
+        time_path = self.time_axis_path_input.text()
 
-    def browseFolder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Selecionar pasta")
-        if folder:
-            self.pathUserInput.setText(folder)
-
-    def loadMatchingFiles(self) -> None:
-        path = self.pathUserInput.text()
-        keyword = self.keywordUserInput.text()
-
-        if not (path and keyword):
-            self.fileIndexComboBox.setEnabled(False)
-            self.fileIndexComboBox.clear()
-            self.fileIndexComboBox.addItem("Selecione uma série")
+        if not (data_path and time_path and os.path.exists(data_path) and os.path.exists(time_path)):
+            self.data_info_label.setText("Erro: Verifique se os caminhos dos arquivos estão corretos.")
             return
 
-        allFiles = [f for f in os.listdir(path) if f.endswith(".dat") and f.startswith(keyword)]
+        try:
+            time_data, series_data = self.file_worker_interfacer.get_data_from_file(data_path, time_path)
+            self.plot_data(time_data, series_data)
 
-        seriesFiles = []
-        timeAxisCandidate = None
-        for f in allFiles:
-            if re.search(r'\d{3}\.dat$', f):
-                seriesFiles.append(f)
-            else:
-                if timeAxisCandidate is None:
-                    timeAxisCandidate = f
+            len_of_series = len(series_data)
+            sweep_duration = (time_data[-1] - time_data[0])
+            sampling_rate = len_of_series / sweep_duration if sweep_duration > 0 else 0
+            self.number_of_points_teller.setText(f"Número de pontos: {len_of_series}")
+            self.time_span_teller.setText(f"Duração da varredura: {sweep_duration:.4f} (s)")
+            self.sampling_rate_teller.setText(f"Sampling Rate: {sampling_rate:.2f} (S/s)")
+            self.data_info_label.setText("Clique em um ponto ou use ← → para navegar")
+        except Exception as e:
+            self.data_info_label.setText(f"Falha ao carregar dados: {e}")
 
-        if timeAxisCandidate:
-            self.timeAxisFileInput.setText(timeAxisCandidate)
+    def plot_data(self, time_data: np.ndarray, series_data: np.ndarray) -> None:
+        self.plot_widget.clear()
+        self.highlight_plot = None
+        self.current_highlighted_index = None
 
-        self.fileWorkerInterfacer.userInput(path, keyword, self.timeAxisFileInput.text())
+        self.current_data_x = time_data
+        self.current_data_y = series_data
 
-        self.matchingFiles = seriesFiles
-        self.fileIndexComboBox.clear()
-        self.fileIndexComboBox.addItem("Selecione uma série")
-        for i in range(len(seriesFiles)):
-            self.fileIndexComboBox.addItem(f"{i + 1}")
+        self.plot_widget.setLabel('left', 'V=dphi/dt (V)')
+        self.plot_widget.setLabel('bottom', 'time (s)')
 
-        self.fileIndexComboBox.setEnabled(bool(seriesFiles))
-
-
-    def updateFileIndex(self) -> None:
-        selectedIndex = self.fileIndexComboBox.currentIndex() - 1
-        if 0 <= selectedIndex < len(self.matchingFiles):
-            self.plotData(self.matchingFiles[selectedIndex])
-            serieNumber = int(self.matchingFiles[selectedIndex][-7:-4])
-            df = self.fileWorkerInterfacer.getDataFromFile(serieNumber)
-            lenOfSeries = len(df["Series"].values)
-            sweepDuration = (max(df["Time"].values) - min(df["Time"].values))
-            samplingRate = lenOfSeries * sweepDuration
-            self.numberOfPointsTeller.setText(f"Número de pontos: {lenOfSeries}")
-            self.timeSpanTeller.setText(f"Duração da varredura: {sweepDuration} (s)")
-            self.samplingRateTeller.setText(f"Samplign Rate: {samplingRate} (S/s)")
-
-    def checkInputs(self) -> None:
-        if self.pathUserInput.text() and self.keywordUserInput.text() and self.timeAxisFileInput.text():
-            self.fileIndexComboBox.setEnabled(True)
-        else:
-            self.fileIndexComboBox.setEnabled(False)
-            self.fileIndexComboBox.clear()
-            self.fileIndexComboBox.addItem("Selecione uma série")
-
-    def plotData(self, fileName: str) -> None:
-        serieNumber = int(fileName[-7:-4])
-        df = self.fileWorkerInterfacer.getDataFromFile(serieNumber)
-        self.plotWidget.clear()
-
-        self.currentDataX = df["Time"].values
-        self.currentDataY = df["Series"].values
-
-        self.plotWidget.setLabel('left', 'V=dphi/dt (V)')
-        self.plotWidget.setLabel('bottom', 'time (s)')
-
-        xmin, xmax = self.currentDataX.min(), self.currentDataX.max()
-        ymin, ymax = self.currentDataY.min(), self.currentDataY.max()
-        self.plotWidget.getViewBox().setRange(xRange=[xmin, xmax], yRange=[ymin, ymax])
+        xmin, xmax = self.current_data_x.min(), self.current_data_x.max()
+        ymin, ymax = self.current_data_y.min(), self.current_data_y.max()
+        self.plot_widget.getViewBox().setRange(xRange=[xmin, xmax], yRange=[ymin, ymax])
 
         curve = PlotCurveItem(
-            self.currentDataX,
-            self.currentDataY,
+            self.current_data_x,
+            self.current_data_y,
             pen=mkPen("k", width=2),
             downsample=10,
             autoDownsample=True
         )
-        self.plotWidget.addItem(curve)
+        self.plot_widget.addItem(curve)
 
-    def onPlotClicked(self, event) -> None:
-        if self.currentDataX is None:
+    def on_plot_clicked(self, event) -> None:
+        if self.current_data_x is None:
             return
         pos = event.scenePos()
-        vb = self.plotWidget.getViewBox()
-        mousePoint = vb.mapSceneToView(pos)
-        x_clicked = mousePoint.x()
-        index = int((abs(self.currentDataX - x_clicked)).argmin())
-        self.currentHighlightedIndex = index
-        self.updateHighlight(self.currentDataX[index], self.currentDataY[index])
+        view_box = self.plot_widget.getViewBox()
+        mouse_point = view_box.mapSceneToView(pos)
+        x_clicked = mouse_point.x()
+        index = int((abs(self.current_data_x - x_clicked)).argmin())
+        self.current_highlighted_index = index
+        self.update_highlight(self.current_data_x[index], self.current_data_y[index])
 
-    def updateHighlight(self, x: float, y: float) -> None:
-        if self.highlightPlot:
-            self.plotWidget.removeItem(self.highlightPlot)
-        self.highlightPlot = ScatterPlotItem([x], [y], size=10, brush=mkBrush('r'))
-        self.plotWidget.addItem(self.highlightPlot)
-        self.dataInfoLabel.setText(f"x: {x}, y: {y}")
+    def update_highlight(self, x: float, y: float) -> None:
+        if self.highlight_plot:
+            self.plot_widget.removeItem(self.highlight_plot)
+        self.highlight_plot = ScatterPlotItem([x], [y], size=10, brush=mkBrush('r'))
+        self.plot_widget.addItem(self.highlight_plot)
+        self.data_info_label.setText(f"x: {x}, y: {y}")
 
-    def zoomIn(self) -> None:
-        vb = self.plotWidget.getViewBox()
-        vb.scaleBy((0.9, 0.9))
+    def zoom_in(self) -> None:
+        view_box = self.plot_widget.getViewBox()
+        view_box.scaleBy((0.9, 0.9))
 
-    def zoomOut(self) -> None:
-        vb = self.plotWidget.getViewBox()
-        vb.scaleBy((1.1, 1.1))
+    def zoom_out(self) -> None:
+        view_box = self.plot_widget.getViewBox()
+        view_box.scaleBy((1.1, 1.1))
 
     def keyPressEvent(self, event) -> None:
-        if self.currentDataX is None or self.currentHighlightedIndex is None:
-            return super().keyPressEvent(event)
-        if event.key() == Qt.Key_Right and self.currentHighlightedIndex < len(self.currentDataX) - 1:
-            self.currentHighlightedIndex += 1
-            x = self.currentDataX[self.currentHighlightedIndex]
-            y = self.currentDataY[self.currentHighlightedIndex]
-            self.updateHighlight(x, y)
-        elif event.key() == Qt.Key_Left and self.currentHighlightedIndex > 0:
-            self.currentHighlightedIndex -= 1
-            x = self.currentDataX[self.currentHighlightedIndex]
-            y = self.currentDataY[self.currentHighlightedIndex]
-            self.updateHighlight(x, y)
+        if self.current_data_x is None or self.current_highlighted_index is None:
+            super().keyPressEvent(event)
+            return
+
+        if event.key() == Qt.Key_Right and self.current_highlighted_index < len(self.current_data_x) - 1:
+            self.current_highlighted_index += 1
+            x = self.current_data_x[self.current_highlighted_index]
+            y = self.current_data_y[self.current_highlighted_index]
+            self.update_highlight(x, y)
+        elif event.key() == Qt.Key_Left and self.current_highlighted_index > 0:
+            self.current_highlighted_index -= 1
+            x = self.current_data_x[self.current_highlighted_index]
+            y = self.current_data_y[self.current_highlighted_index]
+            self.update_highlight(x, y)
         else:
             super().keyPressEvent(event)
 
-#Boilerplate block for code execution
+# Boilerplate block for code execution
 if __name__ == "__main__":
     app = QApplication([])
     window = DataShower()
