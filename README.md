@@ -1,2 +1,2 @@
 # Barkhausen Noise Analysis
-Repositório para programas de análise de Ruído Barkhausen.
+Repositório para rotinas computacionaois do fenômeno ruído Barkhausen.
