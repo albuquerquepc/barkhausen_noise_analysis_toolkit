@@ -21,7 +21,7 @@ class FileWorkers():
 
 # GUI interectability and data show class handler
 class DataShower(QWidget):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Plotter das séries temporais do BN")
         self.highlight_plot = None
@@ -42,7 +42,7 @@ class DataShower(QWidget):
         self.left_container_layout.addWidget(self.data_file_path_label)
 
         self.data_file_path_input = QLineEdit()
-        self.data_file_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Prepared_Selected_FFT_0.2316s_0.2318s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D001.dat")
+        self.data_file_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Original_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D001.dat")
         self.left_container_layout.addWidget(self.data_file_path_input)
 
         self.browse_data_file_button = QPushButton("Procurar arquivo de dados...")
@@ -53,7 +53,7 @@ class DataShower(QWidget):
         self.left_container_layout.addWidget(self.time_axis_path_label)
 
         self.time_axis_path_input = QLineEdit()
-        self.time_axis_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Prepared_Selected_FFT_0.2316s_0.2318s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D_t.dat")
+        self.time_axis_path_input.setText("/home/paulo/Scripts/barkhausen-noise-analysis/Original_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D_t.dat")
         self.left_container_layout.addWidget(self.time_axis_path_input)
 
         self.browse_time_file_button = QPushButton("Procurar arquivo de tempo...")
@@ -140,8 +140,8 @@ class DataShower(QWidget):
         self.current_data_x = time_data
         self.current_data_y = series_data
 
-        self.plot_widget.setLabel('left', 'V=dphi/dt (V)')
-        self.plot_widget.setLabel('bottom', 'time (s)')
+        self.plot_widget.setLabel('left', 'Tensão (V)')
+        self.plot_widget.setLabel('bottom', 'Tempo (s)')
 
         xmin, xmax = self.current_data_x.min(), self.current_data_x.max()
         ymin, ymax = self.current_data_y.min(), self.current_data_y.max()
@@ -162,7 +162,7 @@ class DataShower(QWidget):
         pos = event.scenePos()
         view_box = self.plot_widget.getViewBox()
         mouse_point = view_box.mapSceneToView(pos)
-        x_clicked = mouse_point.x()
+        #x_clicked = mouse_point.x()
         index = int((abs(self.current_data_x - x_clicked)).argmin())
         self.current_highlighted_index = index
         self.update_highlight(self.current_data_x[index], self.current_data_y[index])

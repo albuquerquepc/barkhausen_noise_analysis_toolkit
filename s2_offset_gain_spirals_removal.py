@@ -10,7 +10,7 @@ def main() -> None:
     
     os.makedirs(PATH_TO_PREPARED_DATA, exist_ok=True)
     
-    NUM_OF_FILES = 5
+    NUM_OF_FILES = 212
 
     NUM_OF_COIL_TURNS = 400
     GAIN = 50000

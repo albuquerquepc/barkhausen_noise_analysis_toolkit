@@ -8,6 +8,6 @@ PATH_TO_MEAN_DATA = "/home/paulo/Scripts/barkhausen-noise-analysis/Mean_Py_1000n
 
 SAMPLE_ID = "R798D"
 
-NUM_OF_FILES = 5
+NUM_OF_FILES = 212
 
 SAMPLING_RATE = 4e6
