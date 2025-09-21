@@ -1,4 +1,13 @@
+#The sample_info module 
+
 class Sample:
+  """
+  Template to fill in the sample information.
+  :param str sample_id_input: Documented unique sample id.
+  :param str description_input: Desciption of the sample general structure (composition, thickness, etc.)
+  :param int num_of_files_input: int: Number of data files to be work with for this sample
+  :param int sampling_rate_input = int: Rate in which the data points for each data file where collected for this sample.
+  """
   def __init__(self, sample_id_input: str, description_input: str, num_of_files_input: int, sampling_rate_input = int) -> None:
     self.sample_id_assign = sample_id_input
     self.description_assign = description_input
