@@ -18,13 +18,13 @@ class Paths:
     return self.main_path_assign
 
   def original(self) -> str:
-    return self.original_path_assign
+    return self.original_path_assign_suffix
 
   def prepared(self) -> str:
-    return self.prepared_path_assign
+    return self.prepared_path_assign_suffix
   
   def mean(self) -> str:
-    return self.mean_path_assign
+    return self.mean_path_assign_suffix
 
 r798d_data_path: Paths = Paths("/home/paulo/Documentos/ic_gmag/medidas/Py(1000nm)/Barkhausen/", "Original_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/", "Prepared_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/", "Means_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/")
 
