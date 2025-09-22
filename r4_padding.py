@@ -26,7 +26,7 @@ def main() -> None:
 
   np.savetxt(fname=f"{directory_for_padded}{sample.sample_id()}_t.dat", X=padded_time_for_fft, fmt='%.8e')
 
-  for counter in range(1, sample.num_of_files()+1, 1):
+  for counter in range(1, 6+1, 1):
 
       data_array = np.zeros(empty_array_lenght, dtype=np.float128)
       prepared_file_name = f"{directory_for_interval}/{sample.sample_id()}{counter:03}.dat"
@@ -43,6 +43,7 @@ def main() -> None:
 
 global directory_for_padded
 directory_for_padded: str = f"{path.main()}Padded_{interval.start()}s_{interval.end()}s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/"
+print(directory_for_padded)
 
 if __name__ == "__main__":
   main()

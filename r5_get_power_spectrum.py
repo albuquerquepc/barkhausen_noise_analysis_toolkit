@@ -13,44 +13,37 @@ def main() -> None:
 
   os.makedirs(directory_for_powerspectrum, exist_ok=True)
 
-  prepared_fft_1st_file_name = f"{directory_for_padded}/{sample.sample_id()}001.dat"
+  prepared_fft_1st_file_name = f"/home/paulo/Documentos/ic_gmag/medidas/Py(1000nm)/Barkhausen/Padded_0.17s_0.22s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/R798D001.dat"
   len_of_1st_file = len(np.loadtxt(prepared_fft_1st_file_name))
   
   window = np.bartlett(len_of_1st_file)
 
-  #get_frequencies1 = np.fft.fftfreq(len_of_1st_file, 1/sample.sampling_rate)
-  #get_frequencies2 = np.arange(0, (sample.sampling_rate/2)+1/sample.sampling_rate, (Ssample.sampling_rate/2)/(len_of_1st_file/2))
+  get_frequencies = np.fft.rfftfreq(len_of_1st_file, d=1/sample.sampling_rate())
 
-  frequencies_spectrum_length = int(len_of_1st_file/2+1)
-  get_frequencies = np.linspace(0, int(sample.sampling_rate()/2), frequencies_spectrum_length)
+  power_spectrum_mean: np.ndarray = np.zeros(int((len_of_1st_file/2)+1))
 
-  #get_frequencies = np.fft.rfftfreq(len_of_1st_file/2, d=1/sample.sampling_rate())
-
-  power_spectrum_mean = np.zeros(len_of_1st_file)
-
-  for counter in range(1, sample.num_of_files()+1, 1):
+  for counter in range(1, 5+1, 1):
     prepared_fft_file_name = f"{directory_for_padded}{sample.sample_id()}{counter:03}.dat"
     data_read = np.loadtxt(prepared_fft_file_name, dtype=np.float128)
 
-    signal_through_window = data_read * window
-
-    signal_fft = np.fft.fft(signal_through_window)
-    power_spectrum = signal_fft * np.conj(signal_fft)
-
-    #as linha acima isso podem ser substituidas pela linha
-
-    #power_spectrum = np.fft.rfft(signal_through_window)
+    signal_through_window: np.ndarray = data_read * window
     
+    signal_transform: np.ndarray = np.fft.rfft(signal_through_window)
 
-    power_spectrum_real = power_spectrum.real / (len_of_1st_file**2)
-    power_spectrum_mean += (power_spectrum_real / sample.num_of_files())
+    signal_abs: np.ndarray = np.abs(signal_transform)
+
+    signal_abs_squared: np.ndarray = np.square(signal_abs)
+
+    power_spectrum: np.ndarray = signal_abs_squared/((len_of_1st_file)**2)
+
+    power_spectrum_mean += (power_spectrum / sample.num_of_files())
 
     print(f"{counter}/{sample.num_of_files()}: {power_spectrum_mean}")
 
-  np.savetxt(fname=f"{directory_for_powerspectrum}Power_Spectrum.dat", X=power_spectrum_mean[0:frequencies_spectrum_length], fmt='%.8e')
-  np.savetxt(fname=f"{directory_for_powerspectrum}Frequencies.dat", X=get_frequencies[0:frequencies_spectrum_length], fmt='%.8e')
+  np.savetxt(fname=f"{directory_for_powerspectrum}Power_Spectrum.dat", X=power_spectrum_mean, fmt='%.8e')
+  np.savetxt(fname=f"{directory_for_powerspectrum}Frequencies.dat", X=get_frequencies, fmt='%.8e')
 
-  plt.loglog(get_frequencies, power_spectrum_mean[0:frequencies_spectrum_length], linestyle="none", marker='o', ms=1, color="black")
+  plt.loglog(get_frequencies, power_spectrum_mean, linestyle="none", marker='o', ms=1, color="black")
   plt.show()
 
 global directory_for_powerspectrum
