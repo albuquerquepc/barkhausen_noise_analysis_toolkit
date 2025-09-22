@@ -1,50 +1,60 @@
-from constants_and_pathing import MAIN_DATA_DIRECTORY, PATH_TO_MEAN_DATA, NUM_OF_FILES, SAMPLE_ID, SAMPLING_RATE
-from s4_get_small_interval_data import INTERVAL_START_IN_SECONDS, INTERVAL_END_IN_SECONDS
-
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 
+from modules.paths import r798d_data_path as path
+from modules.sample_info import r798d_info as sample
+from r3_get_interval_data import interval
+from r4_padding import directory_for_padded
 
-def main():
-  PATH_TO_PADDED_DATA = f"/home/paulo/Documents/ic_gmag/scripts/barkhausen_noises_analysis_tools_library/Padded_Py_1000nm_R798D_0.05Hz_100kHz_4MSs"
-  
-  os.makedirs(f"{MAIN_DATA_DIRECTORY}Power_Spectrum_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/", exist_ok=True)
 
-  prepared_fft_1st_file_name = f"{PATH_TO_PADDED_DATA}/{SAMPLE_ID}001.dat"
+
+def main() -> None:
+
+  os.makedirs(directory_for_powerspectrum, exist_ok=True)
+
+  prepared_fft_1st_file_name = f"{directory_for_padded}/{sample.sample_id()}001.dat"
   len_of_1st_file = len(np.loadtxt(prepared_fft_1st_file_name))
   
   window = np.bartlett(len_of_1st_file)
 
-  #get_frequencies1 = np.fft.fftfreq(len_of_1st_file, 1/SAMPLING_RATE)
-  #get_frequencies2 = np.arange(0, (SAMPLING_RATE/2)+1/SAMPLING_RATE, (SAMPLING_RATE/2)/(len_of_1st_file/2))
+  #get_frequencies1 = np.fft.fftfreq(len_of_1st_file, 1/sample.sampling_rate)
+  #get_frequencies2 = np.arange(0, (sample.sampling_rate/2)+1/sample.sampling_rate, (Ssample.sampling_rate/2)/(len_of_1st_file/2))
 
   frequencies_spectrum_length = int(len_of_1st_file/2+1)
-  get_frequencies = np.linspace(0, int(SAMPLING_RATE/2), frequencies_spectrum_length)
+  get_frequencies = np.linspace(0, int(sample.sampling_rate()/2), frequencies_spectrum_length)
 
+  #get_frequencies = np.fft.rfftfreq(len_of_1st_file/2, d=1/sample.sampling_rate())
 
   power_spectrum_mean = np.zeros(len_of_1st_file)
 
-  np.savetxt(fname=f"{PATH_TO_MEAN_DATA}{SAMPLE_ID}_Frequencies.dat", X=get_frequencies, fmt='%.8e')
-
-  for counter in range(1, NUM_OF_FILES+1, 1):
-    prepared_fft_file_name = f"{PATH_TO_PADDED_DATA}/{SAMPLE_ID}{counter:03}.dat"
+  for counter in range(1, sample.num_of_files()+1, 1):
+    prepared_fft_file_name = f"{directory_for_padded}{sample.sample_id()}{counter:03}.dat"
     data_read = np.loadtxt(prepared_fft_file_name, dtype=np.float128)
 
     signal_through_window = data_read * window
 
     signal_fft = np.fft.fft(signal_through_window)
-
     power_spectrum = signal_fft * np.conj(signal_fft)
+
+    #as linha acima isso podem ser substituidas pela linha
+
+    #power_spectrum = np.fft.rfft(signal_through_window)
+    
+
     power_spectrum_real = power_spectrum.real / (len_of_1st_file**2)
-    power_spectrum_mean += (power_spectrum_real / NUM_OF_FILES)
+    power_spectrum_mean += (power_spectrum_real / sample.num_of_files())
 
-    print(f"{counter}/{NUM_OF_FILES}: {power_spectrum_mean}")
+    print(f"{counter}/{sample.num_of_files()}: {power_spectrum_mean}")
 
-  np.savetxt(fname=f"{PATH_TO_MEAN_DATA}{SAMPLE_ID}_{INTERVAL_START_IN_SECONDS}s_{INTERVAL_END_IN_SECONDS}s_Power_Spectrum.dat", X=power_spectrum_mean[0:frequencies_spectrum_length], fmt='%.8e')
+  np.savetxt(fname=f"{directory_for_powerspectrum}Power_Spectrum.dat", X=power_spectrum_mean[0:frequencies_spectrum_length], fmt='%.8e')
+  np.savetxt(fname=f"{directory_for_powerspectrum}Frequencies.dat", X=get_frequencies[0:frequencies_spectrum_length], fmt='%.8e')
 
-  plt.loglog(get_frequencies, power_spectrum_mean[0:frequencies_spectrum_length])
+  plt.loglog(get_frequencies, power_spectrum_mean[0:frequencies_spectrum_length], linestyle="none", marker='o', ms=1, color="black")
   plt.show()
+
+global directory_for_powerspectrum
+directory_for_powerspectrum: str = f"{path.main()}Power_Spectrum_{interval.start()}s_{interval.end()}s_Py_1000nm_R798D_0.05Hz_100kHz_4MSs/"
 
 if __name__ == "__main__":
   main()

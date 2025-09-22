@@ -1,6 +1,6 @@
 import numpy as np
-import shutil
 import os
+import shutil
 from modules.paths import r798d_data_path as path
 from modules.sample_info import r798d_info as sample
 
@@ -27,7 +27,9 @@ def main() -> None:
     np.savetxt(prepared_data_file_name, X=prepared_data, fmt='%.8e')
     print(f"{counter:03}/{sample.num_of_files():03}: salvo em {prepared_data_file_name}")
   
+  print(f"Dados preparados salvos no diretório: {path.prepared()}")
   shutil.copy2(f"{path.original()}{sample.sample_id()}_t.dat", f"{path.prepared()}{sample.sample_id()}_t.dat" )
+  print(f"Arquivo de tempo copiado para: {path.prepared()}_t.dat")
 
 if __name__ == "__main__":
   main()

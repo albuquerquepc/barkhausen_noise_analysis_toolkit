@@ -1,5 +1,5 @@
-import os
 import numpy as np
+import os
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog, QSpacerItem, QSizePolicy)
 from PySide6.QtCore import Qt
 from pyqtgraph import PlotWidget, mkPen, setConfigOption, ScatterPlotItem, mkBrush, PlotCurveItem
@@ -163,7 +163,7 @@ class DataShower(QWidget):
       pos = event.scenePos()
       view_box = self.plot_widget.getViewBox()
       mouse_point = view_box.mapSceneToView(pos)
-      #x_clicked = mouse_point.x()
+      x_clicked = mouse_point.x()
       index = int((abs(self.current_data_x - x_clicked)).argmin())
       self.current_highlighted_index = index
       self.update_highlight(self.current_data_x[index], self.current_data_y[index])

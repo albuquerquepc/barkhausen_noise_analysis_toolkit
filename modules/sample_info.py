@@ -7,12 +7,12 @@ class Sample:
   :param int sampling_rate_input = int: Rate in which the data points for each data file where collected for this sample.
   """
   def __init__(self, sample_id_input: str, description_input: str, num_of_files_input: int, sampling_rate_input: int, sensing_coil_turns_input: int, gain_input: int) -> None:
-    self.sample_id_assign = sample_id_input
-    self.description_assign = description_input
-    self.num_of_files_assign = num_of_files_input
-    self.sampling_rate_assign = sampling_rate_input
-    self.sensing_coil_turns_assign = sensing_coil_turns_input
-    self.gain_assign = gain_input
+    self.sample_id_assign: str = sample_id_input
+    self.description_assign: str = description_input
+    self.num_of_files_assign: int = num_of_files_input
+    self.sampling_rate_assign: int = sampling_rate_input
+    self.sensing_coil_turns_assign: int = sensing_coil_turns_input
+    self.gain_assign: int = gain_input
 
   def sample_id(self) -> str:
     return self.sample_id_assign
