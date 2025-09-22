@@ -16,13 +16,12 @@ def main() -> None:
   rounded_up_int: int = ceil(log2(prepared_array_length))
   padded_array_lenght: int = 2**rounded_up_int
   power_spectrum_mean: np.ndarray = np.zeros(int((padded_array_lenght/2)+1))
-  print(padded_array_lenght)
 
   window = np.bartlett(padded_array_lenght)
   
   get_frequencies = np.fft.rfftfreq(padded_array_lenght, d=1/sample.sampling_rate())
   
-  for counter in range(1, 5+1, 1):
+  for counter in range(1, sample.num_of_files()+1, 1):
 
     selected_file_name = f"{directory_for_interval}{sample.sample_id()}{counter:03}.dat"
     prepared_data_read = np.loadtxt(selected_file_name, dtype=np.float128)
@@ -30,19 +29,14 @@ def main() -> None:
     padded_array[0:prepared_array_length] = prepared_data_read
 
     signal_through_window: np.ndarray = padded_array * window
-    
-    signal_transform: np.ndarray = np.fft.rfft(signal_through_window)
 
-    signal_abs: np.ndarray = np.abs(signal_transform)
+    power_spectrum: np.ndarray = np.square(np.abs(np.fft.rfft(signal_through_window)))/(padded_array_lenght**2)
 
-    signal_abs_squared: np.ndarray = np.square(signal_abs)
-
-    power_spectrum: np.ndarray = signal_abs_squared/((rounded_up_int)**2)
-
-    power_spectrum_mean += (power_spectrum / sample.num_of_files())
+    contributing_factor: np.ndarray =  power_spectrum / sample.num_of_files()
+    power_spectrum_mean += contributing_factor
 
 
-    print(f"{counter}/{sample.num_of_files()}: {power_spectrum_mean}")
+    print(f"{counter}/{sample.num_of_files()}: {power_spectrum_mean }")
 
   np.savetxt(fname=f"{directory_for_powerspectrum}Power_Spectrum_{interval.start()}s_{interval.end()}s.dat", X=power_spectrum_mean, fmt='%.8e')
   np.savetxt(fname=f"{directory_for_powerspectrum}Frequencies_{interval.start()}s_{interval.end()}s.dat", X=get_frequencies, fmt='%.8e')
