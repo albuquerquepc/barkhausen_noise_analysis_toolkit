@@ -1,7 +1,6 @@
 import numpy as np
 import os
 from math import log2, ceil
-import matplotlib.pyplot as plt
 
 from modules.paths import r798d_data_path as path
 from modules.sample_info import r798d_info as sample
@@ -36,7 +35,7 @@ def main() -> None:
     power_spectrum_mean += contributing_factor
 
 
-    print(f"{counter}/{sample.num_of_files()}: {power_spectrum_mean }")
+    print(f"{counter}/{sample.num_of_files()}: média alterada para {power_spectrum_mean }")
 
   np.savetxt(fname=f"{directory_for_powerspectrum}Power_Spectrum_{interval.start()}s_{interval.end()}s.dat", X=power_spectrum_mean, fmt='%.8e')
   np.savetxt(fname=f"{directory_for_powerspectrum}Frequencies_{interval.start()}s_{interval.end()}s.dat", X=get_frequencies, fmt='%.8e')

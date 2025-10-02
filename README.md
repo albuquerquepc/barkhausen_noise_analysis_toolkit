@@ -1,2 +1,2 @@
-# Barkhausen Noise Analysis Tool Library
+# Barkhausen Noise Analysis Toolkit
 Repositório de rotinas computacionais para análise do fenômeno ruído Barkhausen.
