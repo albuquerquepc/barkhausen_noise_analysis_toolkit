@@ -30,7 +30,6 @@ def main() -> None:
     print(np.min(data_read[data_read > 0]))
 
     plt.plot(time_readout, data_read, linestyle="none", marker='o', ms=1, color="black")
-    plt.xlim(0.223, 0.224)
     plt.show()
     
 if __name__ == "__main__":
